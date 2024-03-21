@@ -1,10 +1,10 @@
-import { useState, useEffect, useCallback } from "react";
+import { useCallback, useEffect, useState } from "react";
 import toast from "react-hot-toast";
 
-import Search from "../components/Search";
-import SortRepos from "../components/SortRepos";
 import ProfileInfo from "../components/ProfileInfo";
 import Repos from "../components/Repos";
+import Search from "../components/Search";
+import SortRepos from "../components/SortRepos";
 import Spinner from "../components/Spinner";
 
 const HomePage = () => {
@@ -18,21 +18,15 @@ const HomePage = () => {
     async (username = "haojiezhang7") => {
       setLoading(true);
       try {
-        const userRes = await fetch(
-          `https://api.github.com/users/${username}`,
-          {
-            headers: {
-              authorization: `token ${import.meta.env.VITE_GITHUB_API_KEY}`,
-            },
-          }
+        const res = await fetch(
+          `http://localhost:5000/api/users/profile/${username}`
         );
-        const userProfile = await userRes.json();
-        setUserProfile(userProfile);
+        const { repos, userProfile } = await res.json();
 
-        const repoRes = await fetch(userProfile.repos_url);
-        const repos = await repoRes.json();
-        repos.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+        repos.sort((a, b) => new Date(b.created_at) - new Date(a.created_at)); //descending, recent first
+
         setRepos(repos);
+        setUserProfile(userProfile);
 
         return { userProfile, repos };
       } catch (error) {
@@ -56,6 +50,7 @@ const HomePage = () => {
     setUserProfile(null);
 
     const { userProfile, repos } = await getUserProfileAndRepos(username);
+
     setUserProfile(userProfile);
     setRepos(repos);
     setLoading(false);
@@ -64,11 +59,11 @@ const HomePage = () => {
 
   const onSort = (sortType) => {
     if (sortType === "recent") {
-      repos.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+      repos.sort((a, b) => new Date(b.created_at) - new Date(a.created_at)); //descending, recent first
     } else if (sortType === "stars") {
-      repos.sort((a, b) => b.stargazer_count - a.stargazer_count);
+      repos.sort((a, b) => b.stargazers_count - a.stargazers_count); //descending, most stars first
     } else if (sortType === "forks") {
-      repos.sort((a, b) => b.forks_count - a.forks_count);
+      repos.sort((a, b) => b.forks_count - a.forks_count); //descending, most forks first
     }
     setSortType(sortType);
     setRepos([...repos]);
@@ -87,5 +82,4 @@ const HomePage = () => {
     </div>
   );
 };
-
 export default HomePage;
